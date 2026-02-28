@@ -1,0 +1,19 @@
+.DS_Store
+.Rhistory
+__pycache__/
+*.csv
+*.joblib
+*.html
+*.ipynb
+homework2/
+notes_export/
+import requests.py
+scrape_billboard.py
+skill_tfidf_linkedin.py
+transformer_sentiment_reddit.py
+vader_sentiment_reddit.py
+job_market_crawler.py
+topic_model_demo.py
+sentiment_analysis.qmd
+text_prep.qmd
+topic_models.qmd
