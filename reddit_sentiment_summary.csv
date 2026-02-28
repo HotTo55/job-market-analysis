@@ -1,0 +1,37 @@
+group,group_value,sentiment,count,share
+overall,all,positive,2335,0.6742708634132255
+overall,all,negative,1051,0.3034940802772163
+overall,all,neutral,77,0.022235056309558188
+subreddit,MBA,negative,129,0.17916666666666667
+subreddit,MBA,neutral,12,0.016666666666666666
+subreddit,MBA,positive,579,0.8041666666666667
+subreddit,cscareerquestions,negative,369,0.28828125
+subreddit,cscareerquestions,neutral,21,0.01640625
+subreddit,cscareerquestions,positive,890,0.6953125
+subreddit,jobs,negative,553,0.37799043062200954
+subreddit,jobs,neutral,44,0.03007518796992481
+subreddit,jobs,positive,866,0.5919343814080656
+keyword,ghosted,negative,132,0.40615384615384614
+keyword,ghosted,neutral,11,0.033846153846153845
+keyword,ghosted,positive,182,0.56
+keyword,hiring freeze,negative,41,0.35344827586206895
+keyword,hiring freeze,neutral,0,0.0
+keyword,hiring freeze,positive,75,0.646551724137931
+keyword,job search,negative,142,0.2586520947176685
+keyword,job search,neutral,14,0.025500910746812388
+keyword,job search,positive,393,0.7158469945355191
+keyword,laid off,negative,123,0.2808219178082192
+keyword,laid off,neutral,10,0.0228310502283105
+keyword,laid off,positive,305,0.6963470319634704
+keyword,no response,negative,151,0.2915057915057915
+keyword,no response,neutral,6,0.011583011583011582
+keyword,no response,positive,361,0.696911196911197
+keyword,offer,negative,88,0.14814814814814814
+keyword,offer,neutral,23,0.03872053872053872
+keyword,offer,positive,483,0.8131313131313131
+keyword,rejected,negative,236,0.41843971631205673
+keyword,rejected,neutral,5,0.008865248226950355
+keyword,rejected,positive,323,0.5726950354609929
+keyword,unemployment,negative,138,0.38440111420612816
+keyword,unemployment,neutral,8,0.022284122562674095
+keyword,unemployment,positive,213,0.5933147632311978

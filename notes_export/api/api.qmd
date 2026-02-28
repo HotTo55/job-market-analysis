@@ -1,0 +1,135 @@
+---
+title: "APIs"
+format: html
+---
+
+## APIs
+
+Whether you know it or not, you use application programming interfaces (APIs) all the time...how else would you be able to copy from one program and paste into another? While APIs exist at all levels of our interactions with computers, we are going to focus on using APIs to acquire data from providers. You will see APIs offered from most of the big tech companies (Facebook, Google, Reddit, just to name a small fraction), but not all of them are immediately useful for collecting data. 
+
+```{python}
+import json
+import pandas as pd
+import requests
+
+pd.set_option('display.max_columns', None)
+
+r = requests.get("http://api.zippopotam.us/us/il/redmon")
+
+r.text
+
+raw_text = r.text
+
+json.loads(raw_text)
+
+all_info = pd.read_json(raw_text)
+
+pd.json_normalize(data=json.loads(raw_text), 
+  record_path='places', 
+  meta=['country abbreviation', 'state abbreviation'])
+```
+
+### An Easy Example
+
+Would you like to see how old a computer thinks you are based upon your name alone?
+
+Try out the agify API!
+
+```{python, eval = FALSE}
+base_link = "https://api.agify.io/?name="
+
+your_name = ""
+
+complete_link = base_link + your_name
+```
+
+
+We can use AlphaVantage as a good testing place. You can get a key here: https://www.alphavantage.co/support/#api-key
+
+Before we start on that, there are a few things to remember. 
+
+1. Always search for the "developers" tab for any given site -- they probably have an API.
+
+2. Always read through the documentation. 
+
+3. Look for example calls.
+
+Once you have a key, you can explore the various endpoints that AlphaVantage has to offer. For demonstration, we will just use the time series weekly endpoint and have an interval set to 5 minutes.
+
+
+```{python}
+av_k = "W2J61LUSTTXBV64M"
+
+av_symbol = "GOOGL"
+
+av_link = "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=full&symbol={}&apikey={}".format(
+  av_symbol, av_k)
+
+av_request = requests.get(av_link)
+
+av_json = av_request.json()
+
+series_data = av_json['Weekly Time Series']
+
+meta_data = av_json['Meta Data']
+
+av_data = pd.DataFrame.from_dict(series_data, orient='index')
+
+av_data['symbol'] = meta_data['2. Symbol']
+
+av_data.reset_index(inplace = True)
+
+av_data = av_data.rename(columns = {'index':'date'})
+```
+
+### POST Requests
+
+```{python}
+import requests
+from io import StringIO
+
+url = 'https://geocoding.geo.census.gov/geocoder/locations/addressbatch'
+
+file = {'addressFile': 
+  ('address.csv', 
+  open('/Users/sberry5/Documents/teaching/UDA/addresses.csv', 'rb'), 
+  'text/csv')
+}
+
+data = {'benchmark':'Public_AR_Current'} 
+  
+r = requests.post(url=url, data=data, files=file) 
+
+pd.read_csv(StringIO(r.text))
+```
+
+Using any POST request is just a minor variant of what we just saw. Let's tackle something fun. We had previously used GET to pass parameters into the url, but some APIs just want query parameters. 
+
+
+```{python}
+import numpy
+import time
+
+page = 1
+
+result = pd.DataFrame()
+
+while page != None:
+  
+  time.sleep(numpy.random.uniform(low = .5, high = 1.5))
+
+  params = {'page': page, 
+    'per_page': 100}
+  
+  nba_players = requests.get('https://www.balldontlie.io/api/v1/players', 
+    params = params)
+  
+  nba_json = nba_players.json()
+  
+  nba_data = nba_json['data']
+  
+  result = result.append(pd.json_normalize(nba_data, meta = ['id']))
+  
+  page = nba_json['meta']['next_page']
+
+```

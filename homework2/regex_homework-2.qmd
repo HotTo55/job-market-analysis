@@ -1,0 +1,25 @@
+---
+title: "regex homework"
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+Use the `regex_data` file to complete the following tasks. 
+
+1. Change the `Name` column to "first name, first, last name, last" format.
+
+2. Extract the area code from `Phone Number` and put it in a new column.
+
+3. Extract the domain from the `Email` column and put it in a new column.
+
+4. Remove any LLC, Inc., or Corp. from the `Company` column.
+
+5. If any parenthetical information exists in the `Job` column, move it to a new column and remove it from the `Job` column.
+
+6. Get the last 4 digits of `SSN`. 
+
+7. Remove the +4 from the `Zipcode` column.
+
+8. Extract the expiration year and state from the `License_Plate` column and put them in new columns.

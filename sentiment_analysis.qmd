@@ -1,0 +1,291 @@
+---
+title: "Sentiment Analysis"
+format:
+  html:
+    toc: true
+    toc-location: left
+    self-contained: true
+jupyter: python3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+Sentiment analysis is commonly used when we want to know the general *feelings* of what someone has written or said. Sentiment analysis is commonly seen applied to Twitter and other social media posts, but we can use it anywhere where people have written/said something (product reviews, song lyrics, final statements).
+
+Sentiment can take many different forms: positive/negative affect, emotional states, and even financial contexts.
+
+Let's take a peak at some simple sentiment analysis.
+
+## Simple Sentiment
+
+Let's consider the following statements:
+
+The correlation is`python cor_value`!
+
+```{python}
+
+from textblob import TextBlob
+
+statement = "I hate code, but I love money."
+
+blob = TextBlob(statement)
+
+blob.sentiment
+
+blob.polarity
+blob.sentiment_assessments
+```
+
+Do you think that dislike and love are of the same magnitude? If I had to make a wild guess, I might say that love is stronger than dislike. Let's switch out our sentiment library to get something with a little better notion of polarity.
+
+## Smarter Sentiment Analysis
+
+Words, by themselves, certainly have meaning. When we write or speak, though, we use language for more effectively if we craft statements that are more than just a collection of words. While word-level sentiment analysis can be a good starting point, it misses a lot of context. What happens when we use the word "really"? What about "not"? Even the humble "however" can change the sentiment of a sentence. 
+
+For this reason, we need a sentence-level understanding of sentiment. 
+
+Computationally, we have the following:
+
+$$C=c'_i,j,l/√(w_i,jn)$$
+
+Where:
+
+$$c'_{i,j}=∑{((1 + w_{amp} + w_{deamp})\cdot w_{i,j,k}^{p}(-1)^{2 + w_{neg}})}$$
+
+$$w_{amp}= (w_{b} > 1) + ∑{(w_{neg}\cdot (z \cdot w_{i,j,k}^{a}))}$$
+
+$$w_{deamp} = \max(w_{deamp'}, -1)$$
+
+$$w_{deamp'}= (w_{b} < 1) + ∑{(z(- w_{neg}\cdot w_{i,j,k}^{a} + w_{i,j,k}^{d}))}$$
+
+$$w_{b} = 1 + z_2 * w_{b'}$$
+
+$$w_{b'} = ∑{\\(|w_{adversative\,conjunction}|, ..., w_{i, j, k}^{p}, w_{i, j, k}^{p}, ..., |w_{adversative\,conjunction}| * -1}\\)$$
+
+$$w_{neg}= ≤ft(∑{w_{i,j,k}^{n}})$$  
+
+While all the formulas can be helpful, let's break down the steps a little more.
+
+1. Split paragraphs into individual sentences and each sentence becomes a bag of words.
+
+2. From that bag of words, extract out sets of words that match terms within a sentiment lexicon. These are called *polar clusters*.
+
+3. Assign a general polarity score to those polar clusters: 1 for positive and -1 for negative.
+
+4. Find the 4 words before each polar cluster word and 2 words after each polar cluster word. These words, called the *context cluster*, are evaluated to be neutral, *amplifiers*, or *deamplifiers*. Amplifiers *intensify* a polarity score, whereas deamplifiers *downtone* a polarity score. These words are also searched for *negators* -- words that will flip the polarity of a word.
+
+5. Search for *adversative conjunctions* -- but, however, and although. Whatever comes before the adversative gets deamplified and whatever comes after the adversative gets amplified.
+
+Is this an absolutely perfect metric? Of course not! It does, however, provide a better score than word-level sentiment without the complexity (and high data cost) of more advanced methods.
+
+```{python}
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+vader = SentimentIntensityAnalyzer()
+
+statement = "I hate code, but I love money."
+
+vader.polarity_scores(statement)
+
+vader.polarity_scores(statement).get('compound')
+```
+
+We can see that we get a much stronger sentiment score when we include more information within the sentence. While the first part of our sentence starts out with a negative word (dislike has a sentiment value of -1), we have an adversarial "but" that will downweight whatever is in the initial phrase and then we will have the amplified (from "really", with a default weight of .8) sentiment of "love" (with a weight of .75 in our dictionary).
+
+With all of this together, we get a much better idea about the sentiment of our text.
+
+## Model-based Sentiment
+
+You can also use an NB approach from `textblox`:
+
+```{python}
+import textblob
+from textblob.sentiments import NaiveBayesAnalyzer
+#python3 -m textblob.download_corpora
+# nltk.download('punkt')
+# nltk.download('movie_reviews')
+statement = "I dislike code, but I really love money."
+output = textblob.TextBlob(statement, analyzer=NaiveBayesAnalyzer()).sentiment
+output[0]
+```
+
+If it works, you can also try spacy:
+
+```{python}
+import spacy
+
+from spacytextblob.spacytextblob import SpacyTextBlob
+
+# Run the following in your terminal:
+# python -m spacy download en_core_web_lg
+
+nlp = spacy.load('en_core_web_lg')
+nlp.add_pipe('spacytextblob')
+text = 'I dislike code, but I really love money.'
+doc = nlp(text)
+
+doc._.blob.polarity 
+doc._.blob.subjectivity
+doc._.blob.sentiment_assessments.assessments
+```
+
+```{python}
+from flair.data import Sentence
+from flair.nn import Classifier
+
+text = Sentence('i know we werent perfect, but I never felt this way for no one')
+
+tagger = Classifier.load('sentiment')
+
+tagger.predict(text)
+
+print(text)
+
+text.score
+text.tag
+```
+
+
+## Transformers
+
+```{python}
+from bs4 import BeautifulSoup
+import pandas as pd
+import requests
+from transformers import pipeline
+import torch
+
+# The HuggingFace folks are just making stuff too easy at this point: 
+# https://huggingface.co/docs/transformers/main_classes/pipelines
+
+sentiment_analysis = pipeline('sentiment-analysis')
+
+text = 'i know we werent perfect, but I never felt this way for no one'
+
+result = sentiment_analysis(text)
+
+result[0]['label']
+
+result[0]['score']
+
+```
+
+```{python}
+links = [
+  'https://genius.com/James-mcmurtry-we-cant-make-it-here-anymore-lyrics', 
+  'https://genius.com/Olivia-rodrigo-drivers-license-lyrics', 
+  'https://genius.com/Lola-young-messy-lyrics'
+  ]
+
+def scrape_clean(link):
+  song_request = requests.get(link)
+  song_content = BeautifulSoup(song_request.content, 'html.parser') 
+  song_lyrics = song_content.select('#lyrics-root')
+  song_list = []
+  for i in range(len(song_lyrics)):
+    song_list.append(song_lyrics[i].getText())
+  song_list = ' '.join(song_list)
+  song_pd = pd.DataFrame([song_list], columns = ['lyrics'])
+  song_pd['lyrics'] = (
+    song_pd.lyrics.str.replace('(\\[.*?\\])', '', regex=True)
+    .str.replace('\xa0', '  ', regex=True)
+    .str.replace('^.*Read More ', ' ', regex=True)
+    .str.replace('([a-z])([A-Z])', '\\1 \\2', regex=True) 
+    )
+  
+  return song_pd
+```
+
+```{python}
+song_lyrics = []
+
+for link in links:
+  output = scrape_clean(link)
+  song_lyrics.append(output)
+
+song_lyrics = pd.concat(song_lyrics)
+
+song_lyrics['lyrics'] = song_lyrics['lyrics'].str.slice(0,511)  
+
+def sentiment_results(lyrics):
+  sent_result = sentiment_analysis(lyrics)
+  label = sent_result[0]['label']
+  score = sent_result[0]['score']
+  return [label, score]
+
+song_lyrics.apply(lambda x: sentiment_results(x['lyrics']), axis=1)
+
+song_lyrics['sent'] = song_lyrics.apply(lambda x: sentiment_results(x['lyrics']), axis=1)
+
+song_lyrics[['sent', 'prob']] = song_lyrics['sent'].apply(pd.Series)
+```
+
+
+## Differences
+
+```{python}
+review = '''
+Sure these shoes are pricey, but you get what you pay for.
+I worked 60 hours a week all year long and I finally was able
+to purchas these shoes. I put them on and you could immediately
+tell these weren't your average $60 sneakers. They may have the
+same amount of form, comfort, shape, and performance, but they
+are WAY more stylish. Like $3000 stylish. Sometimes my daughter
+complains, though. She'll say things like, 'Are we going to eat
+tonight' and 'I'm tired of sleeping in the street', but then I 
+just show her my awesome Nikes and she shuts her mouth. Great
+shoes, do recommend!!
+'''
+
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+sid = SentimentIntensityAnalyzer()
+
+sid.polarity_scores(review)
+```
+
+```{python}
+import spacy
+
+from spacytextblob.spacytextblob import SpacyTextBlob
+
+nlp = spacy.load('en_core_web_sm')
+nlp.add_pipe('spacytextblob')
+doc = nlp(review)
+
+doc._.blob.polarity 
+```
+
+```{python}
+from transformers import pipeline
+import torch
+
+sentiment_analysis = pipeline('sentiment-analysis')
+
+result = sentiment_analysis(review)
+
+result[0]['label']
+
+result[0]['score']
+
+```
+
+```{python}
+bad_review = '''
+4 stars are you kidding me? Are they from friends and relatives? Hungry for Thai food takeout, this was the closest one to our hotel. We were in Indiana for my sons baseball tournament. Entering the place you could tell it was run down. Leaned on the service desk and it was all sticky. Gross!!! No one in the place dining should have told me this place was not good. The way to tell a good Thai food by their pad Thai and this was the worsed pad thai We have ever tasted. Not one thing was right about this dish. We thought we tasted the worsed Thai food before but this place definitely hands down is the winner. To top it off I found a piece of hair in my fried rice. This was typical of a place that doesn't care what they serve. The fried rice was nothing but white rice soak with soy sauce and wala! , fried rice!! I'm so mad at myself for believing the 4 star review!!!! Stay away from this place unless you like throwing your money away. It's a total dump! I'm not kidding.
+'''
+
+sid.polarity_scores(bad_review)
+
+doc = nlp(bad_review)
+
+doc._.blob.polarity 
+
+result = sentiment_analysis(bad_review)
+result
+
+```
+
